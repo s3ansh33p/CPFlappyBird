@@ -25,7 +25,7 @@ void debugger(uint32_t frame) {
     if(DEBUG){
         int i = 0; while (i<(width*12*3)) vram[i++]=0; //clear the top 3 lines
         Debug_Printf(0,0,true,0,"FRAME");
-        // E = Entities, R = Rectangles, P = Particles, RB = RigidBodies C = Circles US = Usage (out of max entities)
+        Debug_Printf(7,0,true,0,"Flappy Bird - Ported by Sean McGinty");
         Debug_Printf(0,1,true,0,"%05d", frame);
         Debug_Printf(7,1,true,0,"Mem %8d",memUsed);
         Debug_Printf(20,1,true,0,"Fonts %01d",fLoaded);
@@ -45,17 +45,9 @@ void debugger(uint32_t frame) {
 void toggleDebug() {
     DEBUG=!DEBUG;
 
-    // this initial implementation assumes that the tile size is
-    // 16x16 and the tiles start at the top left of the screen
-    // if (isTileManagerActive) {
-    //     for (int i = 0; i < 3; i++) {
-    //         for (int j = 0; j < TILE_COUNT_X; j++) {
-    //             // set the cell hasUpdate to true
-    //             tile_manager_pointer->map[(i*TILE_COUNT_X) + j].hasUpdate = true;
-    //         }
-    //     }
-    //     if (renderer_pointer != nullptr) {
-    //         renderer_pointer->updateAll();
-    //     }
-    // }
+    for (int i = 0; i < 48; i++) {
+        for (int j = 0; j < 320; j++) {
+            setPixel(j, i, color(78, 192, 202));
+        }
+    }
 }

@@ -10,37 +10,71 @@
 
 #include "../../draw_functions.hpp"
 
+// Load bg
+uint16_t *bg;
+
+uint32_t frame = 0;
+
 class Player {
     public:
         int16_t x = width / 2;
         int16_t y = height / 2;
-        int8_t moveSpeed = 4;
-        int8_t jumpPower = 10;
-        int8_t txWidth = 34;
-        int8_t txHeight = 24;
+        int8_t velocity = 1;
+        int8_t jumpPower = 6;
+        int16_t txWidth = 34;
+        int16_t txHeight = 24;
         uint16_t *textures[3];
+        uint16_t *bg;
         int8_t animationFrame = 0;
+        void init();
         void moveJump();
         void removeOldFrame();
         void animate();
         void loadTextures();
+        void line(int16_t x1, int16_t y1, int16_t w, int16_t h);
 };
 
-void Player::moveJump() {
-
+void Player::init() {
+	LOAD_TEXTURE_PTR("background", bgTx);
+    this->bg = bgTx;
+	DRAW_TEXTURE(this->bg, 0, 0);
 }
 
-void Player::removeOldFrame() {
-	for (int x=this->x; x<this->x+this->txWidth; x++){
-		for (int y=this->y; y<this->y+this->txHeight; y++){
-			setPixel(x,y, color(255,0,0));
-		}
+void Player::moveJump() {
+    if (this->velocity > -this->jumpPower) {
+        this->velocity = -this->jumpPower;
     }
 }
 
+void Player::line(int16_t x1, int16_t y1, int16_t w, int16_t h) {
+    for (int16_t j = y1; j < y1 + h; j++) {
+		for (int16_t i = x1; i < x1+w; i++) {
+            setPixel(i, j, this->bg[2 + j*320 + i]);
+		}
+	}
+}
+
 void Player::animate() {
-    this->removeOldFrame();
+    // overwrite buffer for new frame
+	for (int16_t j = this->y; j < this->y + this->txHeight; j++) {
+		for (int16_t i = this->x; i < this->x+this->txWidth; i++) {
+            setPixel(i, j, this->bg[2 + j*320 + i]);
+		}
+	}
+
+    // calculations
+    this->y += this->velocity;
+    if (frame % 3 == 0) {
+        this->velocity++;
+    }
+
+    if (this->y > height) {
+        // game over
+        Debug_Printf(1,1,true,0,"Game Over");
+    }
+
     this->animationFrame++;
+    frame++;
     if (this->animationFrame > 3) {
         this->animationFrame = 0;
     }

@@ -3,8 +3,6 @@
 
 Flappy Bird ported for the Classpad II fx-CP400.
 
-**<!> THIS IS A WORK IN PROGRESS <!>**
-
 ## Installation
 
 Firstly, clone the project

@@ -30,7 +30,7 @@ void debugger(uint32_t frame) {
         Debug_Printf(7,1,true,0,"Mem %8d",memUsed);
         Debug_Printf(20,1,true,0,"Fonts %01d",fLoaded);
         Debug_Printf(28,1,true,0,"Textures %02d",txLoaded);
-        Debug_Printf(46,1,true,0,"V 0.0.1");
+        Debug_Printf(46,1,true,0,"V 1.0.0");
         // 3rd line for Listeners
         Debug_Printf(0,2,true,0,"DEBUG");
         Debug_Printf(7,2,true,0,"Listeners %02d",listener_count+listener_count2);

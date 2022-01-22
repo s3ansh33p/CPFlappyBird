@@ -6,16 +6,20 @@
 #include "lib/core/debug.hpp"
 #include "lib/core/player.hpp"
 #include "lib/functions/random.hpp"
+#include "lib/collision/collisions.hpp"
 
 #ifndef PC
 	APP_NAME("Flappy Bird")
 	APP_DESCRIPTION("Flappy Bird ported using elements of hhkEngine")
 	APP_AUTHOR("s3ansh33p")
-	APP_VERSION("0.0.1")
+	APP_VERSION("1.0.0")
 #endif
 
 // Tracks the main game loop
 bool game_running = true;
+
+// Determines if the user in the restart screen
+bool restart_screen = false;
 
 // RNG pointer
 RandomGenerator* rng;
@@ -23,29 +27,42 @@ RandomGenerator* rng;
 // Player pointer
 Player* player_pointer;
 
+const uint16_t pipeHeight = 320;
+const uint16_t pipeWidth = 52;
+
 // Pipes
 struct Pipe {
 	int16_t x;
 	int16_t topY;
 	int16_t bottomY;
-	int16_t color;
 };
 
-// Max of 8 on the screen at once
+// Max of 3 on the screen at once
 class Pipes {
 	public:
-		Pipe pipes[8];
+		Pipe pipes[3];
 		int8_t pipeCount = 0;
+		uint16_t *textures[2];
 		void addPipe();
 		void removePipe();
 		void render();
+		void drawPipe(int16_t x, int16_t y, int8_t index);
+		void checkCollision(int16_t px, int16_t py, int16_t pw, int16_t ph);
 };
+
+void Pipes::checkCollision(int16_t px, int16_t py, int16_t pw, int16_t ph) {
+	for (int8_t i = 0; i < this->pipeCount; i++) {
+		if (boxBox(px, py, pw, ph, this->pipes[i].x, 0, pipeWidth, this->pipes[i].topY) || boxBox(px, py, pw, ph, this->pipes[i].x, this->pipes[i].bottomY, pipeWidth, height-this->pipes[i].bottomY)) {
+			// game over
+			game_over = true;
+		}
+	}
+}
 
 void Pipes::addPipe() {
 	this->pipes[pipeCount].x = width-1;
-	pipes[pipeCount].topY = rng->Generate(100)+40;
-	pipes[pipeCount].bottomY = pipes[pipeCount].topY + rng->Generate(240)+80;
-	pipes[pipeCount].color = color(rng->Generate(255),rng->Generate(255),rng->Generate(255));
+	pipes[pipeCount].topY = rng->Generate(100)+80;
+	pipes[pipeCount].bottomY = pipes[pipeCount].topY + rng->Generate(200)+100;
 	this->pipeCount++;
 }
 
@@ -57,65 +74,35 @@ void Pipes::removePipe() {
 	this->pipeCount--;
 }
 
-// void DRAW_PIPE(int16_t x, int16_t y) {
-// 	// 320 is height of pipe texture
-// 	int16_t yMax = y + 320;
-// 	if (yMax > height) {
-// 		yMax = height;
-// 	}
-// 	// 52 is width of pipe texture
-// 	int16_t xMax = x + 52;
-// 	if (xMax > width) {
-// 		xMax = width;
-// 	}
-// 	for (int16_t j = y; j < yMax; j++) {
-// 		for (int16_t i = x; i < xMax; i++) {
-//             setPixel(i, j, pipeTx[2 + j*320 + i]);
-// 		}
-// 	}
-// }
+void Pipes::drawPipe(int16_t x, int16_t y, int8_t index) {
+	for (int16_t j = 0; j < pipeHeight; j++) {
+		for (int16_t i = 0; i < pipeWidth; i++) {
+			if (this->textures[0][2 + j*pipeWidth + i] != TRANSPARENCY_COLOR) {
+            	setPixel(x+i, y+j, this->textures[index][2 + j*pipeWidth + i]);
+			}
+		}
+	}
+}
 
 void Pipes::render() {
 	for (int i = 0; i < this->pipeCount; i++) {
 		
-		// Top
-		int16_t pipeY = this->pipes[i].topY;
-		player_pointer->line(this->pipes[i].x, 0, 1, height);
-		player_pointer->line(this->pipes[i].x + 52, 0, 1, height);
+		this->drawPipe(this->pipes[i].x, this->pipes[i].topY - pipeHeight, 1);
+		//manual draw outset - some bug idk
+		line(this->pipes[i].x + 50, this->pipes[i].topY - 24, this->pipes[i].x + 50, this->pipes[i].topY - 1, color(84, 56, 71));
+		line(this->pipes[i].x, this->pipes[i].topY - 24, this->pipes[i].x, this->pipes[i].topY - 1, color(84, 56, 71));
+		player_pointer->line(this->pipes[i].x + pipeWidth, this->pipes[i].topY - 24, 1, 24); // clear old pipe line outset
+		player_pointer->line(this->pipes[i].x + (pipeWidth-2), this->pipes[i].topY - pipeHeight, 1, (pipeHeight-24)); // clear old pipe line inset
 
-		player_pointer->line(this->pipes[i].x, 0, this->pipes[i].x + 52, 1);
-		player_pointer->line(this->pipes[i].x, pipeY, this->pipes[i].x + 52, 1);
+		this->drawPipe(this->pipes[i].x, this->pipes[i].bottomY, 0);
+		player_pointer->line(this->pipes[i].x + pipeWidth, this->pipes[i].bottomY, 1, 24); // clear old pipe line outset
+		player_pointer->line(this->pipes[i].x + (pipeWidth-2), this->pipes[i].bottomY+24, 1, (pipeHeight-24)); // clear old pipe line inset
 
-		// Bottom
-		int16_t pipeYBottom = height - pipeY;
-		player_pointer->line(this->pipes[i].x, 0, this->pipes[i].x + 52, 1);
-		player_pointer->line(this->pipes[i].x, pipeYBottom, this->pipes[i].x + 52, 1);
-		
-		// Top
-		pipeY = this->pipes[i].topY;
-		int16_t pipeColor = this->pipes[i].color;
-		line(this->pipes[i].x, 1, this->pipes[i].x, pipeY, pipeColor);
-		line(this->pipes[i].x + 52, 1, this->pipes[i].x + 52, pipeY, pipeColor);
-		line(this->pipes[i].x, 1, this->pipes[i].x + 52, 1, pipeColor);
-		line(this->pipes[i].x, pipeY, this->pipes[i].x + 52, pipeY, pipeColor);
-
-		// Bottom
-		pipeY = this->pipes[i].bottomY;
-		pipeYBottom = height;
-		line(this->pipes[i].x, pipeY, this->pipes[i].x, pipeYBottom, pipeColor);
-		line(this->pipes[i].x + 52, pipeY, this->pipes[i].x + 52, pipeYBottom, pipeColor);
-		line(this->pipes[i].x, 1, this->pipes[i].x + 52, 1, pipeColor);
-		line(this->pipes[i].x, pipeYBottom, this->pipes[i].x + 52, pipeYBottom, pipeColor);
-		
 
 		// Movement
 		this->pipes[i].x -= 1;
 
-		// new render
-
-
-		// 52 is texture width
-		if (this->pipes[i].x < -52) {
+		if (this->pipes[i].x < -pipeWidth) {
 			this->removePipe();
 		}
 	}
@@ -123,7 +110,15 @@ void Pipes::render() {
 
 // Ends the game and is called by the event handler
 void endGame() {
+	restart_screen = false;
 	game_running = false;
+}
+
+// Restarts the game and is called by the event handler
+void restart() {
+	restart_screen = false;
+	game_over = false;
+	player_pointer->init();
 }
 
 // jump
@@ -139,24 +134,31 @@ void main2() {
 	rng = &rngp;
 
 	Pipes pipes;
+	pipes.textures[0] = load_texture("pipe0");
+	pipes.textures[1] = load_texture("pipe1");
 
 	// load the textures and fonts
 	LOAD_FONT_PTR("fnt\\5x6", f_5x6);
+	LOAD_FONT_PTR("fnt\\7x8", f_7x8);
 
 	// Add event listeners
 	addListener(KEY_BACKSPACE, toggleDebug); // toggle debug mode
 	addListener(KEY_CLEAR, endGame); // end the game
 
 	addListener2(KEY_UP, jump); // jump
+	addListener(KEY_EXE, restart); // restart the game
 
 	Player player;
 	player.loadTextures();
 	player.init();
 	player_pointer = &player;
 
+	// Load game over screen (192x42 px)
+	LOAD_TEXTURE_PTR("gameover", gameover);
+
 	// game starting screen
-	for (int i = 0; i < 100; i+=5) {
-		draw_font_shader(f_5x6, "Flappy Bird", 12, 128, color(255, 193, 0), 0, 0, 4, color(203, 193, 0));
+	for (int i = 0; i < 64; i+=5) {
+		draw_font_shader(f_5x6, "Flappy Bird", 20, 100, color(252, 160, 72), 0, 0, 4, color(228, 96, 24));
 		LCD_Refresh();
 	}
 
@@ -164,6 +166,7 @@ void main2() {
 	player.init();
 
 	uint32_t frame = 0;
+	char score[12] = "Score: 0   ";
 
 	while (game_running) {
 		frame++;
@@ -174,23 +177,68 @@ void main2() {
 			pipes.addPipe();
 		}
 
+		if ((frame-100) % 150 == 0) {
+			int16_t scoreInt = frame / 150;
+			int8_t xCount = 9;
+			// score is the number of pipes that have passed or frames / 150
+			if (scoreInt > 999) {
+				xCount = 12;
+				score[7] = '0' + (scoreInt / 1000);
+				score[8] = '0' + (scoreInt / 100) % 10;
+				score[9] = '0' + (scoreInt / 10) % 10;
+				score[10] = '0' + scoreInt % 10;
+			} if (scoreInt > 99) {
+				xCount = 11;
+				score[7] = '0' + (scoreInt / 100) % 10;
+				score[8] = '0' + (scoreInt / 10) % 10;
+				score[9] = '0' + scoreInt % 10;
+			} if (scoreInt > 9) {
+				xCount = 10;
+				score[7] = '0' + (scoreInt / 10) % 10;
+				score[8] = '0' + scoreInt % 10;
+			} else {
+				score[7] = '0' + scoreInt % 10;
+			}
+			// clear old score
+		    for (int i = 0; i < 8; i++) {
+				for (int j = 49; j < xCount*7; j++) {
+					setPixel(12+j, 12+i, color(78, 192, 202));
+				}
+    		}
+		}
 		pipes.render();
 
 		player.animate();
+
+		DRAW_FONT(f_7x8, score, 12, 12, color(255, 255, 255), 0);
+
+		pipes.checkCollision(player.x, player.y, player.txWidth, player.txHeight);
+
+		if (game_over) {
+			DRAW_TEXTURE(gameover, 64, 192);
+			LCD_Refresh();
+			// load restart screen
+			restart_screen = true;
+			while(restart_screen) {
+				checkEvents();
+			}
+			frame = 0;
+			for (int i = 0; i < pipes.pipeCount; i++) {
+				pipes.removePipe();
+			}
+			score[7] = '0';
+			score[8] = ' ';
+			score[9] = ' ';
+			score[10] = ' ';
+		}
 		
 		debugger(frame);
 		LCD_Refresh();
 	}
-	
-	// game ending screen
-	// for (int i = 0; i < 30; i+=2) {
-	// 	fillScreen(color(240, 240, 240));
-	// 	draw_font_shader(f_5x6, "Game Over", 1, 248, color(50, 45, 45), 0, 0, 3, i);
-	// 	LCD_Refresh();
-	// }
 
 	// free memory
 	free(f_5x6);
+	free(f_7x8);
 	// free(player_pointer);
 	// free(rng);
 }

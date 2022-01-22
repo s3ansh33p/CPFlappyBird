@@ -15,10 +15,12 @@ uint16_t *bg;
 
 uint32_t frame = 0;
 
+bool game_over = false;
+
 class Player {
     public:
-        int16_t x = width / 2;
-        int16_t y = height / 2;
+        int16_t x = width / 2 - 17; // - 17 to center the player
+        int16_t y = height / 2 - 12; // - 12 to center the player
         int8_t velocity = 1;
         int8_t jumpPower = 6;
         int16_t txWidth = 34;
@@ -35,9 +37,11 @@ class Player {
 };
 
 void Player::init() {
-	LOAD_TEXTURE_PTR("background", bgTx);
-    this->bg = bgTx;
 	DRAW_TEXTURE(this->bg, 0, 0);
+    this->x = width / 2 - 17;
+    this->y = height / 2 - 12;
+    this->velocity = 1;
+    this->animationFrame = 0;
 }
 
 void Player::moveJump() {
@@ -69,8 +73,7 @@ void Player::animate() {
     }
 
     if (this->y > height) {
-        // game over
-        Debug_Printf(1,1,true,0,"Game Over");
+        game_over = true;
     }
 
     this->animationFrame++;
@@ -95,4 +98,6 @@ void Player::loadTextures() {
         path[6] = hexChars[i];
         this->textures[i] = load_texture(path);
     }
+    LOAD_TEXTURE_PTR("background", bgTx);
+    this->bg = bgTx;
 }

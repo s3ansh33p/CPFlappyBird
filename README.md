@@ -3,6 +3,11 @@
 
 Flappy Bird ported for the Classpad II fx-CP400.
 
+## Controls
+ - Up key to jump
+ - Clear/Power key to end the game
+ - EXE key to restart
+
 ## Installation
 
 Firstly, clone the project

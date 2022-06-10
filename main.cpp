@@ -138,8 +138,8 @@ void main2() {
 	pipes.textures[1] = load_texture("pipe1");
 
 	// load the textures and fonts
-	LOAD_FONT_PTR("fnt\\5x6", f_5x6);
-	LOAD_FONT_PTR("fnt\\7x8", f_7x8);
+	LOAD_FONT_PTR("5x6", f_5x6);
+	LOAD_FONT_PTR("7x8", f_7x8);
 
 	// Add event listeners
 	addListener(KEY_BACKSPACE, toggleDebug); // toggle debug mode

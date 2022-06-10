@@ -37,4 +37,12 @@ If you want to recompile you can run the following command.
 make clean && make hhk
 ```
 
-Finally copy the executable and res folder to the root directory of the classpad.
+Now that the program is compiled, you will need to copy some files the classpad.
+
+First, copy the fonts from `./res/CPFlappyBird/fnt` to `/usr/fonts/` on the classpad.
+
+If there are existing files for `5x6` and `7x8` on the classpad, you will not need to copy those.
+
+Secondly, copy the textures from `./res/CPFlappyBird/` to `/usr/textures/CPFlappyBird` on the classpad (don't include `fnt` directory).
+
+Finally, copy the `./CPFlappyBird.hhk` to `/bin/CPFlappyBird.hhk` on the classpad.
